@@ -204,13 +204,54 @@
         
         .price-entry {
             display: flex;
+            flex-direction: column;
             gap: 0.5rem;
             margin-bottom: 1rem;
-            align-items: end;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .price-entry-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
         }
         
         .price-entry input {
             flex: 1;
+        }
+        
+        .price-entry .store-row {
+            width: 100%;
+        }
+        
+        .price-entry .price-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .price-entry .price-input {
+            flex: 1;
+        }
+        
+        .price-entry .offer-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .price-entry .remove-btn {
+            padding: 0.5rem 0.8rem;
+            background: rgba(255, 82, 82, 0.3);
+            border: 1px solid rgba(255, 82, 82, 0.5);
+            color: #ff5252;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            min-width: auto;
         }
         
         .price-entry button {
@@ -471,17 +512,19 @@
                             <h4 style="color: #00ff88; margin-bottom: 1rem;">💰 Prezzi</h4>
                             <div id="priceEntries">
                                 <div class="price-entry">
-                                    <div style="flex: 2;">
+                                    <div class="store-row">
                                         <input type="text" placeholder="Supermercato/Negozio" class="store-input">
                                     </div>
-                                    <div style="flex: 1;">
-                                        <input type="number" step="0.01" placeholder="Prezzo" class="price-input">
-                                    </div>
-                                    <div>
-                                        <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
-                                            <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
-                                            Offerta
-                                        </label>
+                                    <div class="price-entry-row">
+                                        <div class="price-row">
+                                            <input type="number" step="0.01" placeholder="Prezzo (€)" class="price-input">
+                                        </div>
+                                        <div class="offer-section">
+                                            <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                                                <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
+                                                Offerta
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -950,17 +993,19 @@
             const priceEntries = document.getElementById('priceEntries');
             priceEntries.innerHTML = `
                 <div class="price-entry">
-                    <div style="flex: 2;">
+                    <div class="store-row">
                         <input type="text" placeholder="Supermercato/Negozio" class="store-input">
                     </div>
-                    <div style="flex: 1;">
-                        <input type="number" step="0.01" placeholder="Prezzo" class="price-input">
-                    </div>
-                    <div>
-                        <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
-                            <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
-                            Offerta
-                        </label>
+                    <div class="price-entry-row">
+                        <div class="price-row">
+                            <input type="number" step="0.01" placeholder="Prezzo (€)" class="price-input">
+                        </div>
+                        <div class="offer-section">
+                            <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                                <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
+                                Offerta
+                            </label>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1035,19 +1080,21 @@
             const newEntry = document.createElement('div');
             newEntry.className = 'price-entry';
             newEntry.innerHTML = `
-                <div style="flex: 2;">
+                <div class="store-row">
                     <input type="text" placeholder="Supermercato/Negozio" class="store-input">
                 </div>
-                <div style="flex: 1;">
-                    <input type="number" step="0.01" placeholder="Prezzo" class="price-input">
+                <div class="price-entry-row">
+                    <div class="price-row">
+                        <input type="number" step="0.01" placeholder="Prezzo (€)" class="price-input">
+                    </div>
+                    <div class="offer-section">
+                        <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                            <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
+                            Offerta
+                        </label>
+                    </div>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="remove-btn">❌</button>
                 </div>
-                <div>
-                    <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
-                        <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
-                        Offerta
-                    </label>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()" style="padding: 0.8rem; background: rgba(255, 82, 82, 0.3); border: 1px solid rgba(255, 82, 82, 0.5); color: #ff5252; border-radius: 8px; cursor: pointer;">❌</button>
             `;
             priceEntries.appendChild(newEntry);
         }
@@ -1094,19 +1141,21 @@
                     const entry = document.createElement('div');
                     entry.className = 'price-entry';
                     entry.innerHTML = `
-                        <div style="flex: 2;">
+                        <div class="store-row">
                             <input type="text" placeholder="Supermercato/Negozio" class="store-input" value="${price.store}">
                         </div>
-                        <div style="flex: 1;">
-                            <input type="number" step="0.01" placeholder="Prezzo" class="price-input" value="${price.price}">
+                        <div class="price-entry-row">
+                            <div class="price-row">
+                                <input type="number" step="0.01" placeholder="Prezzo (€)" class="price-input" value="${price.price}">
+                            </div>
+                            <div class="offer-section">
+                                <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                                    <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;" ${price.isOffer ? 'checked' : ''}>
+                                    Offerta
+                                </label>
+                            </div>
+                            <button type="button" onclick="this.parentElement.parentElement.remove()" class="remove-btn">❌</button>
                         </div>
-                        <div>
-                            <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
-                                <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;" ${price.isOffer ? 'checked' : ''}>
-                                Offerta
-                            </label>
-                        </div>
-                        <button type="button" onclick="this.parentElement.remove()" style="padding: 0.8rem; background: rgba(255, 82, 82, 0.3); border: 1px solid rgba(255, 82, 82, 0.5); color: #ff5252; border-radius: 8px; cursor: pointer;">❌</button>
                     `;
                     priceEntries.appendChild(entry);
                 });

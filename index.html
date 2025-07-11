@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Codici a Barre</title>
+    <meta name="description" content="Scansiona codici a barre con la fotocamera del tuo dispositivo">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            flex: 1;
+            padding: 2rem 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .scanner-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 1.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 2px;
+            background: #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            border: none;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #00e07a, #00c4ef);
+        }
+        
+        .result-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .result-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #00ff88;
+        }
+        
+        .result-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .status {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .status.error {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+        }
+        
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .history {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .history h3 {
+            color: #00ff88;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .history-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .history-time {
+            color: #00d4ff;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+            
+            .scanner-container {
+                padding: 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 Scanner Codici a Barre</h1>
+        <p>Scansiona qualsiasi codice a barre con la fotocamera</p>
+    </div>
+    
+    <div class="container">
+        <div class="scanner-container">
+            <div class="camera-container">
+                <video id="video" autoplay playsinline></video>
+                <div class="scan-overlay"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="startBtn" class="btn btn-primary">
+                    🎥 Avvia Scanner
+                </button>
+                <button id="stopBtn" class="btn hidden">
+                    ⏹️ Ferma Scanner
+                </button>
+                <button id="switchCameraBtn" class="btn hidden">
+                    🔄 Cambia Camera
+                </button>
+            </div>
+            
+            <div id="status" class="status hidden"></div>
+        </div>
+        
+        <div id="resultContainer" class="result-container hidden">
+            <div class="result-title">Codice Scansionato:</div>
+            <div id="resultText" class="result-text"></div>
+            <button id="copyBtn" class="copy-btn">📋 Copia</button>
+        </div>
+        
+        <div id="history" class="history hidden">
+            <h3>📋 Cronologia Scansioni</h3>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+        class BarcodeScanner {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.switchCameraBtn = document.getElementById('switchCameraBtn');
+                this.status = document.getElementById('status');
+                this.resultContainer = document.getElementById('resultContainer');
+                this.resultText = document.getElementById('resultText');
+                this.copyBtn = document.getElementById('copyBtn');
+                this.historyContainer = document.getElementById('history');
+                this.historyList = document.getElementById('historyList');
+                
+                this.isScanning = false;
+                this.currentDeviceId = null;
+                this.devices = [];
+                this.history = this.loadHistory();
+                
+                this.init();
+            }
+            
+            init() {
+                this.startBtn.addEventListener('click', () => this.startScanning());
+                this.stopBtn.addEventListener('click', () => this.stopScanning());
+                this.switchCameraBtn.addEventListener('click', () => this.switchCamera());
+                this.copyBtn.addEventListener('click', () => this.copyResult());
+                
+                this.checkCameraPermission();
+                this.updateHistoryDisplay();
+            }
+            
+            async checkCameraPermission() {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    this.devices = devices.filter(device => device.kind === 'videoinput');
+                    
+                    if (this.devices.length === 0) {
+                        this.showStatus('Nessuna fotocamera disponibile', 'error');
+                        return;
+                    }
+                    
+                    this.showStatus('Premi "Avvia Scanner" per iniziare', 'info');
+                    
+                    if (this.devices.length > 1) {
+                        this.switchCameraBtn.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    this.showStatus('Errore nell\'accesso alla fotocamera', 'error');
+                }
+            }
+            
+            async startScanning() {
+                try {
+                    this.showStatus('Avvio della fotocamera...', 'info');
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+                    
+                    if (this.currentDeviceId) {
+                        constraints.video.deviceId = this.currentDeviceId;
+                    }
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = stream;
+                    
+                    await this.video.play();
+                    
+                    this.initQuagga();
+                    this.updateUI(true);
+                    
+                } catch (error) {
+                    console.error('Errore nell\'avvio della fotocamera:', error);
+                    this.showStatus('Errore nell\'accesso alla fotocamera. Assicurati di aver dato i permessi.', 'error');
+                }
+            }
+            
+            initQuagga() {
+                const config = {
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: this.video,
+                        constraints: {
+                            width: { min: 320 },
+                            height: { min: 240 },
+                            aspectRatio: { min: 1, max: 100 },
+                            facingMode: "environment"
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 2,
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "code_39_vin_reader",
+                            "codabar_reader",
+                            "upc_reader",
+                            "upc_e_reader",
+                            "i2of5_reader",
+                            "2of5_reader",
+                            "code_93_reader"
+                        ]
+                    },
+                    locate: true
+                };
+                
+                Quagga.init(config, (err) => {
+                    if (err) {
+                        console.error('Errore inizializzazione Quagga:', err);
+                        this.showStatus('Errore nell\'inizializzazione dello scanner', 'error');
+                        return;
+                    }
+                    
+                    this.showStatus('Scanner attivo - Inquadra un codice a barre', 'success');
+                    this.isScanning = true;
+                    Quagga.start();
+                });
+                
+                Quagga.onDetected((result) => {
+                    if (result && result.codeResult && result.codeResult.code) {
+                        this.onBarcodeDetected(result.codeResult.code);
+                    }
+                });
+            }
+            
+            onBarcodeDetected(code) {
+                console.log('Codice rilevato:', code);
+                
+                // Vibrazione se supportata
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                this.displayResult(code);
+                this.addToHistory(code);
+                this.showStatus('Codice scansionato con successo!', 'success');
+                
+                // Continua a scansionare senza fermarsi
+            }
+            
+            displayResult(code) {
+                this.resultText.textContent = code;
+                this.resultContainer.classList.remove('hidden');
+            }
+            
+            addToHistory(code) {
+                const timestamp = new Date().toLocaleString('it-IT');
+                const historyItem = { code, timestamp };
+                
+                this.history.unshift(historyItem);
+                
+                // Mantieni solo gli ultimi 10 elementi
+                if (this.history.length > 10) {
+                    this.history = this.history.slice(0, 10);
+                }
+                
+                this.saveHistory();
+                this.updateHistoryDisplay();
+            }
+            
+            updateHistoryDisplay() {
+                if (this.history.length === 0) {
+                    this.historyContainer.classList.add('hidden');
+                    return;
+                }
+                
+                this.historyContainer.classList.remove('hidden');
+                this.historyList.innerHTML = '';
+                
+                this.history.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <div class="history-time">${item.timestamp}</div>
+                        <div>${item.code}</div>
+                    `;
+                    this.historyList.appendChild(historyItem);
+                });
+            }
+            
+            saveHistory() {
+                localStorage.setItem('barcode_history', JSON.stringify(this.history));
+            }
+            
+            loadHistory() {
+                const saved = localStorage.getItem('barcode_history');
+                return saved ? JSON.parse(saved) : [];
+            }
+            
+            copyResult() {
+                const text = this.resultText.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    this.showStatus('Codice copiato negli appunti!', 'success');
+                }).catch(() => {
+                    this.showStatus('Errore nella copia', 'error');
+                });
+            }
+            
+            async switchCamera() {
+                if (this.devices.length <= 1) return;
+                
+                const currentIndex = this.devices.findIndex(d => d.deviceId === this.currentDeviceId);
+                const nextIndex = (currentIndex + 1) % this.devices.length;
+                this.currentDeviceId = this.devices[nextIndex].deviceId;
+                
+                if (this.isScanning) {
+                    this.stopScanning();
+                    setTimeout(() => this.startScanning(), 500);
+                }
+            }
+            
+            stopScanning() {
+                if (this.isScanning) {
+                    Quagga.stop();
+                    this.isScanning = false;
+                }
+                
+                if (this.video.srcObject) {
+                    const tracks = this.video.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    this.video.srcObject = null;
+                }
+                
+                this.updateUI(false);
+                this.showStatus('Scanner fermato', 'info');
+            }
+            
+            updateUI(isScanning) {
+                if (isScanning) {
+                    this.startBtn.classList.add('hidden');
+                    this.stopBtn.classList.remove('hidden');
+                    this.switchCameraBtn.classList.remove('hidden');
+                } else {
+                    this.startBtn.classList.remove('hidden');
+                    this.stopBtn.classList.add('hidden');
+                    this.switchCameraBtn.classList.add('hidden');
+                }
+            }
+            
+            showStatus(message, type = 'info') {
+                this.status.textContent = message;
+                this.status.className = `status ${type}`;
+                this.status.classList.remove('hidden');
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        this.status.classList.add('hidden');
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Inizializza l'app quando la pagina è caricata
+        document.addEventListener('DOMContentLoaded', () => {
+            new BarcodeScanner();
+        });
+        
+        // Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

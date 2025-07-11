@@ -574,7 +574,9 @@
             isScanning: false,
             currentDeviceId: null,
             devices: [],
-            currentBarcode: null
+            currentBarcode: null,
+            lastDetectedCode: null,
+            lastDetectionTime: 0
         };
 
         // Inizializzazione
@@ -703,9 +705,9 @@
                     type: "LiveStream",
                     target: app.video,
                     constraints: {
-                        width: { min: 320 },
-                        height: { min: 240 },
-                        aspectRatio: { min: 1, max: 100 },
+                        width: { min: 640, ideal: 1280 },
+                        height: { min: 480, ideal: 720 },
+                        aspectRatio: { min: 1, max: 2 },
                         facingMode: "environment"
                     }
                 },
@@ -713,23 +715,33 @@
                     patchSize: "medium",
                     halfSample: true
                 },
-                numOfWorkers: 2,
+                numOfWorkers: navigator.hardwareConcurrency || 2,
+                frequency: 10, // Riduce la frequenza di detection per evitare false letture
                 decoder: {
                     readers: [
-                        "code_128_reader",
                         "ean_reader",
-                        "ean_8_reader",
+                        "ean_8_reader", 
+                        "code_128_reader",
                         "code_39_reader",
-                        "code_39_vin_reader",
-                        "codabar_reader",
                         "upc_reader",
-                        "upc_e_reader",
-                        "i2of5_reader",
-                        "2of5_reader",
-                        "code_93_reader"
+                        "upc_e_reader"
                     ]
                 },
-                locate: true
+                locate: true,
+                debug: {
+                    showCanvas: false,
+                    showPatches: false,
+                    showFoundPatches: false,
+                    showSkeleton: false,
+                    showLabels: false,
+                    showPatchLabels: false,
+                    showRemainingPatchLabels: false,
+                    boxFromPatches: {
+                        showTransformed: false,
+                        showTransformedBox: false,
+                        showBB: false
+                    }
+                }
             };
             
             Quagga.init(config, (err) => {
@@ -754,6 +766,21 @@
         function onBarcodeDetected(code) {
             console.log('Codice rilevato:', code);
             
+            // Validazione del codice
+            if (!isValidBarcode(code)) {
+                console.log('Codice non valido, continuando la scansione...');
+                return;
+            }
+            
+            // Evita letture duplicate immediate
+            if (code === app.lastDetectedCode && (Date.now() - app.lastDetectionTime) < 2000) {
+                console.log('Codice duplicato ignorato');
+                return;
+            }
+            
+            app.lastDetectedCode = code;
+            app.lastDetectionTime = Date.now();
+            
             if (navigator.vibrate) {
                 navigator.vibrate(200);
             }
@@ -761,6 +788,60 @@
             app.currentBarcode = code;
             stopScanning();
             searchInDatabase(code);
+        }
+        
+        function isValidBarcode(code) {
+            // Rimuovi spazi e caratteri non numerici
+            const cleanCode = code.replace(/[^0-9]/g, '');
+            
+            // Verifica lunghezza (la maggior parte dei codici sono 8, 12, 13 o 14 cifre)
+            if (cleanCode.length < 6 || cleanCode.length > 18) {
+                return false;
+            }
+            
+            // Verifica che non sia tutto zeri o tutti uguali
+            if (/^0+$/.test(cleanCode) || /^(.)\1+$/.test(cleanCode)) {
+                return false;
+            }
+            
+            // Verifica EAN-13 checksum se applicabile
+            if (cleanCode.length === 13) {
+                return isValidEAN13(cleanCode);
+            }
+            
+            // Verifica EAN-8 checksum se applicabile  
+            if (cleanCode.length === 8) {
+                return isValidEAN8(cleanCode);
+            }
+            
+            // Per altri formati, accetta se supera i controlli base
+            return true;
+        }
+        
+        function isValidEAN13(code) {
+            if (code.length !== 13) return false;
+            
+            let sum = 0;
+            for (let i = 0; i < 12; i++) {
+                const digit = parseInt(code[i]);
+                sum += (i % 2 === 0) ? digit : digit * 3;
+            }
+            
+            const checkDigit = (10 - (sum % 10)) % 10;
+            return checkDigit === parseInt(code[12]);
+        }
+        
+        function isValidEAN8(code) {
+            if (code.length !== 8) return false;
+            
+            let sum = 0;
+            for (let i = 0; i < 7; i++) {
+                const digit = parseInt(code[i]);
+                sum += (i % 2 === 0) ? digit * 3 : digit;
+            }
+            
+            const checkDigit = (10 - (sum % 10)) % 10;
+            return checkDigit === parseInt(code[7]);
         }
 
         function stopScanning() {

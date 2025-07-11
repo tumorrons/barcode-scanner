@@ -1,0 +1,32 @@
+{
+  "name": "Scanner & Database Prodotti",
+  "short_name": "ProductDB",
+  "description": "Scansiona codici a barre e gestisci un database personale dei tuoi prodotti con prezzi e negozi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23667eea'/><text x='256' y='350' text-anchor='middle' font-size='200' fill='white'>🛒</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23667eea'/><text x='96' y='130' text-anchor='middle' font-size='80' fill='white'>🛒</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["utilities", "productivity", "shopping"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 844'><rect width='390' height='844' fill='%23667eea'/><text x='195' y='422' text-anchor='middle' font-size='60' fill='white'>Scanner Prodotti</text></svg>",
+      "sizes": "390x844",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner & Database Prodotti</title>
+    <meta name="description" content="Scansiona e gestisci un database dei tuoi prodotti">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
+        }
+        
+        .container {
+            flex: 1;
+            padding: 2rem 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .scanner-container, .product-form, .database-container, .backup-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 1.5rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        #video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 2px;
+            background: #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            border: none;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4757, #ff6b7a);
+            border: none;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #2ed573, #7bed9f);
+            border: none;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #00ff88;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .price-section {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .price-entry {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            align-items: end;
+        }
+        
+        .price-entry input {
+            flex: 1;
+        }
+        
+        .price-entry button {
+            padding: 0.8rem;
+            background: rgba(255, 82, 82, 0.3);
+            border: 1px solid rgba(255, 82, 82, 0.5);
+            color: #ff5252;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .status.error {
+            background: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+            border: 1px solid rgba(255, 82, 82, 0.3);
+        }
+        
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        
+        .product-result {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .product-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00ff88;
+            margin-bottom: 1rem;
+        }
+        
+        .product-prices {
+            margin-top: 1rem;
+        }
+        
+        .price-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .price-offer {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+        }
+        
+        .database-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .product-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 15px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .search-box {
+            margin-bottom: 1rem;
+        }
+        
+        .stats {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #00ff88;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .backup-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .backup-actions button {
+            flex: 1;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+            
+            .scanner-container, .product-form, .database-container {
+                padding: 1.5rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .nav-tab {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            
+            .backup-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛒 Scanner & Database Prodotti</h1>
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="scanner">📱 Scanner</button>
+            <button class="nav-tab" data-tab="database">📊 Database</button>
+            <button class="nav-tab" data-tab="backup">💾 Backup</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Tab Scanner -->
+        <div id="scanner-tab" class="tab-content active">
+            <div class="scanner-container">
+                <div class="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="scan-overlay"></div>
+                </div>
+                
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">
+                        🎥 Avvia Scanner
+                    </button>
+                    <button id="stopBtn" class="btn hidden">
+                        ⏹️ Ferma Scanner
+                    </button>
+                    <button id="switchCameraBtn" class="btn hidden">
+                        🔄 Cambia Camera
+                    </button>
+                </div>
+                
+                <div id="status" class="status hidden"></div>
+            </div>
+            
+            <!-- Risultato scansione -->
+            <div id="scannedResult" class="hidden">
+                <div id="productFound" class="product-result hidden">
+                    <div class="product-name" id="foundProductName"></div>
+                    <div><strong>Codice:</strong> <span id="foundBarcode"></span></div>
+                    <div class="product-prices" id="foundPrices"></div>
+                    <button class="btn btn-primary" id="editProductBtn">✏️ Modifica Prodotto</button>
+                </div>
+                
+                <div id="productNotFound" class="product-form hidden">
+                    <h3 style="color: #00ff88; margin-bottom: 1rem;">➕ Aggiungi Nuovo Prodotto</h3>
+                    <div><strong>Codice a barre:</strong> <span id="newBarcode"></span></div>
+                    <br>
+                    
+                    <form id="productForm">
+                        <div class="form-group">
+                            <label for="productName">Nome Prodotto *</label>
+                            <input type="text" id="productName" placeholder="Nome del prodotto" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productCategory">Categoria</label>
+                            <select id="productCategory">
+                                <option value="">Seleziona categoria</option>
+                                <option value="alimentari">Alimentari</option>
+                                <option value="bevande">Bevande</option>
+                                <option value="igiene">Igiene e Cura</option>
+                                <option value="casa">Casa e Pulizia</option>
+                                <option value="elettronica">Elettronica</option>
+                                <option value="abbigliamento">Abbigliamento</option>
+                                <option value="altro">Altro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productBrand">Marca</label>
+                            <input type="text" id="productBrand" placeholder="Marca del prodotto">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productDescription">Descrizione</label>
+                            <textarea id="productDescription" placeholder="Descrizione opzionale" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="price-section">
+                            <h4 style="color: #00ff88; margin-bottom: 1rem;">💰 Prezzi</h4>
+                            <div id="priceEntries">
+                                <div class="price-entry">
+                                    <div style="flex: 2;">
+                                        <input type="text" placeholder="Supermercato/Negozio" class="store-input">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <input type="number" step="0.01" placeholder="Prezzo" class="price-input">
+                                    </div>
+                                    <div>
+                                        <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                                            <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
+                                            Offerta
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn" id="addPriceBtn">➕ Aggiungi Prezzo</button>
+                        </div>
+                        
+                        <div class="controls">
+                            <button type="submit" class="btn btn-success">💾 Salva Prodotto</button>
+                            <button type="button" class="btn" id="cancelAddBtn">❌ Annulla</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Database -->
+        <div id="database-tab" class="tab-content">
+            <div class="database-container">
+                <div class="stats">
+                    <h3 style="color: #00ff88; margin-bottom: 1rem;">📈 Statistiche</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalProducts">0</div>
+                            <div class="stat-label">Prodotti</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalStores">0</div>
+                            <div class="stat-label">Negozi</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="avgPrice">€0</div>
+                            <div class="stat-label">Prezzo Medio</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Cerca prodotti..." 
+                           style="width: 100%; padding: 0.8rem; border-radius: 25px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white;">
+                </div>
+                
+                <div class="database-list" id="productsList">
+                    <!-- I prodotti verranno inseriti qui dinamicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Backup -->
+        <div id="backup-tab" class="tab-content">
+            <div class="backup-container">
+                <h3 style="color: #00ff88; margin-bottom: 1rem;">💾 Gestione Backup</h3>
+                
+                <div class="backup-actions">
+                    <button class="btn btn-success" id="exportBtn">
+                        📤 Esporta Database
+                    </button>
+                    <button class="btn btn-primary" id="importBtn">
+                        📥 Importa Database
+                    </button>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".json">
+                
+                <div class="backup-actions">
+                    <button class="btn btn-danger" id="clearBtn">
+                        🗑️ Cancella Tutto
+                    </button>
+                </div>
+                
+                <div id="backupStatus" class="status hidden"></div>
+                
+                <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 10px; margin-top: 1rem;">
+                    <h4 style="color: #00d4ff; margin-bottom: 0.5rem;">ℹ️ Informazioni Backup</h4>
+                    <p style="font-size: 0.9rem; line-height: 1.4;">
+                        • <strong>Esporta:</strong> Scarica tutti i dati in un file JSON<br>
+                        • <strong>Importa:</strong> Carica un file di backup precedente<br>
+                        • I dati sono salvati localmente nel browser<br>
+                        • Consigliamo backup regolari per sicurezza
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+        class ProductDatabase {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.switchCameraBtn = document.getElementById('switchCameraBtn');
+                this.status = document.getElementById('status');
+                
+                this.isScanning = false;
+                this.currentDeviceId = null;
+                this.devices = [];
+                this.currentBarcode = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.startBtn.addEventListener('click', () => this.startScanning());
+                this.stopBtn.addEventListener('click', () => this.stopScanning());
+                this.switchCameraBtn.addEventListener('click', () => this.switchCamera());
+                
+                document.getElementById('productForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveProduct();
+                });
+                
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchProducts(e.target.value);
+                });
+                
+                // Event listeners per i pulsanti
+                this.setupEventListeners();
+                
+                this.checkCameraPermission();
+                this.loadDatabase();
+                this.updateStats();
+            }
+            
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        const tabName = e.target.getAttribute('data-tab');
+                        this.switchTab(tabName);
+                    });
+                });
+                
+                // Product form buttons
+                const editProductBtn = document.getElementById('editProductBtn');
+                if (editProductBtn) {
+                    editProductBtn.addEventListener('click', () => this.editProduct());
+                }
+                
+                const addPriceBtn = document.getElementById('addPriceBtn');
+                if (addPriceBtn) {
+                    addPriceBtn.addEventListener('click', () => this.addPriceEntry());
+                }
+                
+                const cancelAddBtn = document.getElementById('cancelAddBtn');
+                if (cancelAddBtn) {
+                    cancelAddBtn.addEventListener('click', () => this.cancelAddProduct());
+                }
+                
+                // Backup buttons
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', () => this.exportData());
+                }
+                
+                const importBtn = document.getElementById('importBtn');
+                if (importBtn) {
+                    importBtn.addEventListener('click', () => {
+                        document.getElementById('fileInput').click();
+                    });
+                }
+                
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => this.importData(e));
+                }
+                
+                const clearBtn = document.getElementById('clearBtn');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => this.clearDatabase());
+                }
+            }
+            
+            async checkCameraPermission() {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    this.devices = devices.filter(device => device.kind === 'videoinput');
+                    
+                    if (this.devices.length === 0) {
+                        this.showStatus('Nessuna fotocamera disponibile', 'error');
+                        return;
+                    }
+                    
+                    this.showStatus('Premi "Avvia Scanner" per iniziare', 'info');
+                    
+                    if (this.devices.length > 1) {
+                        this.switchCameraBtn.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    this.showStatus('Errore nell\'accesso alla fotocamera', 'error');
+                }
+            }
+            
+            async startScanning() {
+                try {
+                    this.showStatus('Avvio della fotocamera...', 'info');
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+                    
+                    if (this.currentDeviceId) {
+                        constraints.video.deviceId = this.currentDeviceId;
+                    }
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = stream;
+                    
+                    await this.video.play();
+                    
+                    this.initQuagga();
+                    this.updateUI(true);
+                    
+                } catch (error) {
+                    console.error('Errore nell\'avvio della fotocamera:', error);
+                    this.showStatus('Errore nell\'accesso alla fotocamera', 'error');
+                }
+            }
+            
+            initQuagga() {
+                const config = {
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: this.video,
+                        constraints: {
+                            width: { min: 320 },
+                            height: { min: 240 },
+                            aspectRatio: { min: 1, max: 100 },
+                            facingMode: "environment"
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
+                    },
+                    numOfWorkers: 2,
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "code_39_reader",
+                            "code_39_vin_reader",
+                            "codabar_reader",
+                            "upc_reader",
+                            "upc_e_reader",
+                            "i2of5_reader",
+                            "2of5_reader",
+                            "code_93_reader"
+                        ]
+                    },
+                    locate: true
+                };
+                
+                Quagga.init(config, (err) => {
+                    if (err) {
+                        console.error('Errore inizializzazione Quagga:', err);
+                        this.showStatus('Errore nell\'inizializzazione dello scanner', 'error');
+                        return;
+                    }
+                    
+                    this.showStatus('Scanner attivo - Inquadra un codice a barre', 'success');
+                    this.isScanning = true;
+                    Quagga.start();
+                });
+                
+                Quagga.onDetected((result) => {
+                    if (result && result.codeResult && result.codeResult.code) {
+                        this.onBarcodeDetected(result.codeResult.code);
+                    }
+                });
+            }
+            
+            onBarcodeDetected(code) {
+                console.log('Codice rilevato:', code);
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                this.currentBarcode = code;
+                this.stopScanning();
+                this.searchInDatabase(code);
+            }
+            
+            searchInDatabase(barcode) {
+                const products = this.getProducts();
+                const product = products.find(p => p.barcode === barcode);
+                
+                if (product) {
+                    this.showFoundProduct(product);
+                } else {
+                    this.showAddProductForm(barcode);
+                }
+                
+                document.getElementById('scannedResult').classList.remove('hidden');
+            }
+            
+            showFoundProduct(product) {
+                document.getElementById('productFound').classList.remove('hidden');
+                document.getElementById('productNotFound').classList.add('hidden');
+                
+                document.getElementById('foundProductName').textContent = product.name;
+                document.getElementById('foundBarcode').textContent = product.barcode;
+                
+                const pricesContainer = document.getElementById('foundPrices');
+                pricesContainer.innerHTML = '<h4 style="color: #00ff88; margin: 1rem 0 0.5rem 0;">💰 Prezzi:</h4>';
+                
+                if (product.prices && product.prices.length > 0) {
+                    product.prices.forEach(price => {
+                        const priceDiv = document.createElement('div');
+                        priceDiv.className = `price-item ${price.isOffer ? 'price-offer' : ''}`;
+                        priceDiv.innerHTML = `
+                            <div>
+                                <strong>${price.store}</strong>
+                                ${price.isOffer ? '<span style="color: #ffc107;">🏷️ OFFERTA</span>' : ''}
+                            </div>
+                            <div style="font-weight: 600;">€${price.price}</div>
+                        `;
+                        pricesContainer.appendChild(priceDiv);
+                    });
+                } else {
+                    pricesContainer.innerHTML += '<p style="opacity: 0.7;">Nessun prezzo registrato</p>';
+                }
+                
+                this.showStatus('Prodotto trovato nel database!', 'success');
+            }
+            
+            showAddProductForm(barcode) {
+                document.getElementById('productFound').classList.add('hidden');
+                document.getElementById('productNotFound').classList.remove('hidden');
+                
+                document.getElementById('newBarcode').textContent = barcode;
+                this.showStatus('Prodotto non trovato - Aggiungi al database', 'info');
+                
+                // Reset form
+                document.getElementById('productForm').reset();
+                const priceEntries = document.getElementById('priceEntries');
+                priceEntries.innerHTML = `
+                    <div class="price-entry">
+                        <div style="flex: 2;">
+                            <input type="text" placeholder="Supermercato/Negozio" class="store-input">
+                        </div>
+                        <div style="flex: 1;">
+                            <input type="number" step="0.01" placeholder="Prezzo" class="price-input">
+                        </div>
+                        <div>
+                            <label style="display: flex; align-items: center; color: white; font-size: 0.9rem;">
+                                <input type="checkbox" class="offer-checkbox" style="margin-right: 0.5rem;">
+                                Offerta
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            saveProduct() {
+                const name = document.getElementById('productName').value.trim();
+                if (!name) {
+                    this.showStatus('Il nome del prodotto è obbligatorio', 'error');
+                    return;
+                }
+                
+                const category = document.getElementById('productCategory').value;
+                const brand = document.getElementById('productBrand').value.trim();
+                const description = document.getElementById('productDescription').value.trim();
+                
+                // Raccogli i prezzi
+                const prices = [];
+                const priceEntries = document.querySelectorAll('.price-entry');
+                priceEntries.forEach(entry => {
+                    const store = entry.querySelector('.store-input').value.trim();
+                    const price = entry.querySelector('.price-input').value;
+                    const isOffer = entry.querySelector('.offer-checkbox').checked;
+                    
+                    if (store && price) {
+                        prices.push({
+                            store,
+                            price: parseFloat(price),
+                            isOffer,
+                            date: new Date().toISOString()
+                        });
+                    }
+                });
+                
+                
